@@ -514,3 +514,6 @@ where
   AND block_time >= (DATE('2024-03-29') - INTERVAL '180' DAY)
 ```
 
+# Methodology Q&A /July Audit
+
+[Methodology Q&A /July Audit](https://docs.google.com/spreadsheets/d/1Nmw5hsHUkEPjkTGE5WQ56W3O6L463_3i1aWOE3HRhOA/edit?gid=1859566459#gid=1859566459)
