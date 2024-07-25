@@ -1,4 +1,4 @@
-# Mythos Airdrop v3 (draft) Data Sources
+# Mythos Airdrop Data Sources
 
 This has all the queries used for [OpenGov Ref #643 - Mythos airdrop](https://dune.com/substrate/mythos) "Active Users".
 It has been compiled by [Colorful Notion](https://t.me/colorfulnotion), catalyst for Polkadot Dune dashboards via [OpenGov Ref #366](https://polkadot.polkassembly.io/referenda/366) (see [Polkadot wiki](https://wiki.polkadot.network/docs/general/polkadot-ecosystem-overview) ) and Developer of [Dotswap.org](https://dotswap.org) which will support MYTH trading on Polkadot Asset Hub -- see [OpenGov Ref #988](https://polkadot.polkassembly.io/referenda/988).   
@@ -183,7 +183,7 @@ from
 where
   section = 'NominationPools'
   and storage = 'PoolMembers'
-  and era = 1397
+  and era = 1396
   group by 1 order by 2 desc
 ```
 
@@ -223,6 +223,7 @@ group by address_ss58
 
 * [query_3605720](https://dune.com/queries/3605720) 
 ```
+-- Criteria 2 - User is staking DOT (solo or nomination pool)
 -- snapshot era 1396
 WITH
   system_account_list as (
@@ -290,14 +291,11 @@ SELECT
   result.address_ss58,
   result.staking_amount_nominator,
   result.staking_amount_poolmember,
-  result.staking_amount_total,
-  ah.balance
+  result.staking_amount_total
 FROM
-  result LEFT JOIN dune.substrate.result_polkadot_active_holder ah on result.address_ss58 = ah.address_ss58
+  result 
 WHERE 
   staking_amount_total > 0
-  and ah.balance > 0
-  
 ```
 
 
@@ -305,6 +303,7 @@ WHERE
 
 * [query_3605729](https://dune.com/queries/3605729) 
 ```
+-- Criteria 3 - User has compounded or staked additional funds in the last 180 days of the snapshot 
 -- Range 2023-10-01(era 1217) vs 2024-03-29(era 1396)
 WITH
   system_account_list as (
@@ -434,37 +433,26 @@ WITH
           result
           FULL join result_180 on result.address_ss58 = result_180.address_ss58_180
         WHERE
-          result.staking_amount_total - result_180.staking_amount_total_180 > 0
+          result.staking_amount_total - result_180.staking_amount_total_180 > 1e-6
         
       )
-  ),
-  final_res as (
-    SELECT
-      diff.*,
-      ah.balance
+  )
+  SELECT
+      diff.*
     FROM
       diff
-      LEFT JOIN dune.substrate.result_polkadot_active_holder ah on diff.address_ss58 = ah.address_ss58
-      WHERE ah.balance > 0.001
       ORDER BY net_change desc 
-  )
-  select * from final_res
 ```
 
 ## Criteria 4: User has voted in OpenGov refs starting/finishing between 10/1/23-3/29/24
 
-Previous methodology:  [query_3605789](https://dune.com/queries/3605789) based on "User has voted in governance in the last 180 days is listed below" 
-revised to: New methodology (suggested by Ollie @ Parity Data): Get the final blocks of each referendum that started or finished between October 01 2023 - March 29 2024 by calling Referenda.ReferendumInfoFor storage function, and then for each referendum and respective final block - 1, make the call to ConvictionVoting.VotingFor storage function and parse all the votes for the referendum in question. Count number of distinct addresses.
-```
-select address_ss58 from dune.substrate.dataset_mythos_airdrop_criteria4
-```
+Previous methodology in  [query_3605789](https://dune.com/queries/3605789) based on "User has voted in governance in the last 180 days" was revised to New methodology (suggested by Ollie @ Parity Data) of: Get the final blocks of each referendum that started or finished between October 01 2023 - March 29 2024 by calling Referenda.ReferendumInfoFor storage function, and then for each referendum and respective _final block-1_, make the call to `convictionVoting.votingFor` storage function and parse all the votes for the referendum in question.  Use distinct addresses as indicator variable.
+
 
 The above table was built from `end_hash` list from
 https://dune.com/queries/3940588
 incorporated in a script of:
 ```
-  
-
 async  criteria4() {
  let wsEndpoint = 'wss://rpc.polkadot.io';
  var provider = new  WsProvider(wsEndpoint);
@@ -482,19 +470,33 @@ async  criteria4() {
  }
 }
 ```
+The above script incorporates _direct_ voters, not _delegators_ and generates a file like 
+
+```
+# grep CRITERIA4 criteria4.csv | uniq | sort | uniq | cut -d',' -f2 | uniq > result 
+# wc result 
+5338 5338 260626 result
+```
+This results in a small dataset of 5,338 addresses:
+```
+select address_ss58 from dune.substrate.dataset_mythos_airdrop_criteria4
+```
+
+
 
 ## Criteria 5: User has participated in a crowdloan before 3/29/24
 
 * [`query_3605750`](https://dune.com/queries/3605750) 
 ```
+-- Criteria 5 - User has participated in a crowdloan
+-- (before snapshot block 20109444)
 SELECT DISTINCT
   JSON_EXTRACT_SCALAR(data, '$[0]') as address_ss58
 FROM
-  polkadot.events LEFT JOIN dune.substrate.result_polkadot_active_holder ah on JSON_EXTRACT_SCALAR(data, '$[0]') = ah.address_ss58
+  polkadot.events
 WHERE
   section = 'crowdloan'
   AND method = 'Contributed'
-  AND ah.balance > 0
   AND block_number <= 20109444
   AND block_time <= TIMESTAMP '2024-03-29 11:00:30 UTC'
 ```
@@ -506,11 +508,10 @@ WHERE
 SELECT DISTINCT
   JSON_EXTRACT_SCALAR(data, '$[0]') as address_ss58
 FROM
-  polkadot.events LEFT JOIN dune.substrate.result_polkadot_active_holder ah on JSON_EXTRACT_SCALAR(data, '$[0]') = ah.address_ss58
+  polkadot.events
 WHERE
   section = 'crowdloan'
   AND method = 'Contributed'
-  AND ah.balance > 0
   AND block_number <= 20109444
   AND block_time <= TIMESTAMP '2024-03-29 11:00:30 UTC'
   AND block_time > date_add('day', -180, TIMESTAMP '2024-03-29 11:00:30 UTC')
