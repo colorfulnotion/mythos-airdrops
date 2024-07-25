@@ -4,9 +4,9 @@ This has all the queries used for [OpenGov Ref #643 - Mythos airdrop](https://du
 It has been compiled by [Colorful Notion](https://t.me/colorfulnotion), catalyst for Polkadot Dune dashboards via [OpenGov Ref #366](https://polkadot.polkassembly.io/referenda/366) (see [Polkadot wiki](https://wiki.polkadot.network/docs/general/polkadot-ecosystem-overview) ) and Developer of [Dotswap.org](https://dotswap.org) which will support MYTH trading on Polkadot Asset Hub -- see [OpenGov Ref #988](https://polkadot.polkassembly.io/referenda/988).   
 
 This airdrop is being audited by:
-* Ollie @ Parity Data
-* Gautam @ Blockdeep
-* Tommi Enenkel aka alice_und_bob
+* Blockdeep Labs
+* Parity Data
+* OpenGov.Watch
 
 See this [Mythos Airdrop Proposal v3 (draft)](https://docs.google.com/spreadsheets/d/1Nmw5hsHUkEPjkTGE5WQ56W3O6L463_3i1aWOE3HRhOA/edit?gid=1859566459#gid=1859566459) for a compact summary.
 
