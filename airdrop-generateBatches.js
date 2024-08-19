@@ -23,7 +23,15 @@ async function main() {
 
     // Load the target addresses and amounts from CSV
     const transfersData = await readCsvFile('mythos-airdrop-v4-activeusers-20240818.csv');
-    console.log(`Read ${transfersData.length} records`)
+    const inactivesData = await readCsvFile('mythos-airdrop-v4-inactiveusers-20240818.csv');
+    console.log(`Read ${transfersData.length} active addresses`)
+    console.log(`Read ${inactivesData.length} inactive addresses`)
+
+    const inactiveAmount = '11500000000000000000';   
+    for ( const inactive of inactivesData ) {
+	transfersData.push({ address_ss58: inactive.address_ss58, airdrop_amount: inactiveAmount })
+    }
+    console.log(`TOTAL: ${transfersData.length} addresses`)
     
     // Define maximum number of calls in a single batch
     const MAX_CALLS_PER_BATCH = 383;
@@ -32,7 +40,6 @@ async function main() {
     const additionalTransferAddress = '158HZgF63Z5oTUkJ5pDD7s7byafb1nSx1S3UBHYKakjPXMxw';
     const additionalTransferAmount = '201'; 
     const decimalString = '000000000000000000'; // 18 zeroes for MYTH
-    
     // Split transfers into multiple batches
     const airdrop = '643';
     const batches = [];
@@ -48,9 +55,12 @@ async function main() {
     // write batches
     let batchAmount = {};
     for (let i = 0, batch = 0 ; i < transfersData.length; i += MAX_CALLS_PER_BATCH, batch++) {
-	let totalAmount = 0;
+	let totalAmount = 0.0;
 	const batchCalls = transfersData.slice(i, i + MAX_CALLS_PER_BATCH).map(({ address_ss58, airdrop_amount }) => {
-	    if ( airdrop_amount < 1338 ) { // safety
+	    if ( airdrop_amount == inactiveAmount ) {
+		totalAmount += 11.5;
+		return api.tx.foreignAssets.transfer(asset, address_ss58, inactiveAmount);
+	    } else {
 		totalAmount += Math.round(airdrop_amount);
 		return api.tx.foreignAssets.transfer(asset, address_ss58, `${airdrop_amount}${decimalString}`);
 	    }

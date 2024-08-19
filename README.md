@@ -17,11 +17,10 @@ The following scripts have been drafted to support the MYTH airdrop:
 * [airdrop-asMulti.js](./airdrop-asMulti.js) - For all the files in the 643 directory, uses the "asMulti" to submit the batch.
 * [airdrop-approveAsMulti.js](./airdrop-approveAsMulti.js) - For all the files in the 643 directory, uses the "approveAsMulti" to approve the batch.
 
-Currently the 643 directory has just the active users.
+The 643 directory has both active addresses + inactive addresses making up 1245 batches.
 
 ### Next steps:
 
-* Adding in inactive users to `airdrop-generateBatches.js`
 * Develop `airdrop-need-ED.js`, a script to check balances of addresses in the CSV that need Existential Deposit (0.01 DOT) and submits transfer
 * Develop `airdrop-check-airdrop.js`, a script to check MYTH balances of addresses in the CSV file, and outputs which addresses do NOT have the MYTH in the CSV file
 
