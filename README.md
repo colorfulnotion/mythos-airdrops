@@ -7,18 +7,50 @@ See [Mythos dashboard](https://dune.com/substrate/mythos) for background and [My
 
 ## Airdrop execution
 
-The basic strategy for airdrop is to use a 2/3 multisig (see [Polkadot Wiki](https://wiki.polkadot.network/docs/learn-guides-accounts-multisig) for background on multisigs) and follow this:
-
-1. Generate 1245 batches of approximately 382 addresses per batch, put them in a 643 directory.
-2. One entity in a 2/3 multisig can submit the batches with `asMulti`.
-3. A second entity in the same multisig will approve the same multisig with `approveAsMulti`
-
-The following scripts have been drafted to support the MYTH airdrop:
-* [airdrop-generateBatches.js](./airdrop-generateBatches.js) - Maps active+inactive addresses into the raw call data in the 643 directory, where the filename contains the call hash.  
+The basic strategy for airdrop is to use a 2/3 multisig (see [Polkadot Wiki](https://wiki.polkadot.network/docs/learn-guides-accounts-multisig) for background on multisigs) using these 3 scripts:
+* [airdrop-generateBatches.js](./airdrop-generateBatches.js) - Maps active+inactive addresses into the raw call data in the 643 directory in 14 groups, where the filename contains the call hash.  
 * [airdrop-asMulti.js](./airdrop-asMulti.js) - For all the files in the 643 directory, uses the "asMulti" to submit the batch (if production=true)
 * [airdrop-approveAsMulti.js](./airdrop-approveAsMulti.js) - For all the files in the 643 directory, uses the "approveAsMulti" to approve the batch (if production=true)
 
-The 643 directory has both active addresses + inactive addresses making up 1245 batches. 
+The 643 directory has both active addresses + inactive addresses making up 1245 batches, in 14 groups.  The latter 2 scripts take a group input, e.g. "b1" through "b15"
+
+1. Generate 1245 batches of approximately 382 addresses per batch, put them in a 643 directory, organized in 14 groups of around 750K MYTH each.  
+
+```
+# node airdrop-generateBatches.js > airdrop-generateBatches.log
+# grep GROUP airdrop-generateBatches.log
+GROUP 1: 748960 MYTH to 59365 addresses
+GROUP 2: 748960 MYTH to 59365 addresses
+GROUP 3: 748960 MYTH to 59365 addresses
+GROUP 4: 748960 MYTH to 59365 addresses
+GROUP 5: 748960 MYTH to 59365 addresses
+GROUP 6: 750003 MYTH to 57067 addresses
+GROUP 7: 751020 MYTH to 42513 addresses
+GROUP 8: 748650 MYTH to 40215 addresses
+GROUP 9: 747060 MYTH to 18767 addresses
+GROUP 10: 727639 MYTH to 13405 addresses
+GROUP 11: 675561 MYTH to 4979 addresses
+GROUP 12: 509178 MYTH to 1532 addresses
+GROUP 13: 750282 MYTH to 766 addresses
+GROUP 14: 708957 MYTH to 612 addresses
+```
+
+
+2. The FIRST entity in a 2/3 multisig will submit the batches with `asMulti`.
+
+```
+node airdrop-asMulti.js b1
+...
+node airdrop-asMulti.js b14
+```
+
+3. A SECOND entity in the same multisig will approve the same multisig with `approveAsMulti`
+
+```
+node airdrop-approveAsMulti.js b1
+...
+node airdrop-approveAsMulti.js b14
+```
 
 
 ### Next steps:

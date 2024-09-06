@@ -3,9 +3,9 @@ const { cryptoWaitReady, blake2AsHex } = require('@polkadot/util-crypto');
 const fs = require('fs');
 const path = require('path');
 
-const wallet1Mnemonic = fs.readFileSync(`${process.env.HOME}/.wallet1`, 'utf-8').trim();
-const wallet2Address = '16vN968jZh1PHitX7QXDEpy2i5g1C2XrLAPFi4juaJQw1nM';   // temp
-const wallet3Address = '16Ziip8mK44sh7uKFkZgHbapxoKrRxriZaDdzqNAPW9Wr6x4';  // temp
+const wallet1Mnemonic = fs.readFileSync(`${process.env.HOME}/.wallet1`, 'utf-8').trim(); // ST
+const wallet2Address = '13NCLd3foNpsv1huPDzvvfyKh37NEEkGFotZnP52CTR98YFJ';   // CN
+const wallet3Address = '14QT3gXBmzj8ZqwtKrxGHvsyXUL1m1hcT8rqUfe78thmB29j';   // OGW
 const production = false;
 
 async function main() {
@@ -14,6 +14,12 @@ async function main() {
     const api = await ApiPromise.create({ provider: wsProvider });
     await cryptoWaitReady();
 
+    if ( process.argc < 3 ) {
+	console.log("Need group input")
+	process.exit(1);
+    }
+    const group = process.argv[2];
+    console.log("Processing group: ", group)
     
     // Initialize keyring and add accounts
     const keyring = new Keyring({ type: 'sr25519' });
@@ -24,7 +30,7 @@ async function main() {
     const airdrop = "643";
 
     // Directory containing the .txt files
-    const directoryPath = path.join(__dirname, `${airdrop}`);
+    const directoryPath = path.join(__dirname, airdrop, group);
     // Get all .txt files from the directory
     const files = fs.readdirSync(directoryPath).filter(file => file.endsWith('.txt'));
     let nbatches = 0;

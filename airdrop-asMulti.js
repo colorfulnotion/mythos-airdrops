@@ -3,9 +3,9 @@ const { cryptoWaitReady, blake2AsHex } = require('@polkadot/util-crypto');
 const fs = require('fs');
 const path = require('path');
 
-const wallet1Mnemonic = fs.readFileSync(`${process.env.HOME}/.wallet1`, 'utf-8').trim();
-const wallet2Address = '16vN968jZh1PHitX7QXDEpy2i5g1C2XrLAPFi4juaJQw1nM';   // temp
-const wallet3Address = '13DxmMjYqto1AWsMUSkN8JYNHX6d2vBhuSmapB5iYnEiYaxX';  // temp
+const wallet1Mnemonic = fs.readFileSync(`${process.env.HOME}/.wallet1`, 'utf-8').trim();  // CN
+const wallet2Address = '16vN968jZh1PHitX7QXDEpy2i5g1C2XrLAPFi4juaJQw1nM';   // ***** TODO: ST
+const wallet3Address = '14QT3gXBmzj8ZqwtKrxGHvsyXUL1m1hcT8rqUfe78thmB29j';  // OW
 const production = false;
 
 async function main() {
@@ -14,7 +14,13 @@ async function main() {
     const api = await ApiPromise.create({ provider: wsProvider });
     await cryptoWaitReady();
 
-    
+    if ( process.argc < 3 ) {
+	console.log("Need group input")
+	process.exit(1);
+    }
+    const group = process.argv[2];
+    console.log("Processing group: ", group)
+
     // Initialize keyring and add accounts
     const keyring = new Keyring({ type: 'sr25519' });
     const wallet1 = keyring.addFromMnemonic(wallet1Mnemonic);
