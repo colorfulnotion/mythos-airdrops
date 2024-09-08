@@ -53,13 +53,7 @@ node airdrop-approveAsMulti.js b14
 ```
 
 
-### Next steps:
+### Other scripts:
 
-* Develop `airdrop-need-ED.js`, a script to check balances of addresses in the CSV that need Existential Deposit (0.01 DOT) and submits transfer
-* Develop `airdrop-check-airdrop.js`, a script to check MYTH balances of addresses in the CSV file, and outputs which addresses do NOT have the MYTH in the CSV file
-
-
-
-
-
-
+* `airdrop-check.js`, a script to check ED+MYTH balances of addresses in the batches generated, and outputs which addresses do NOT have (a) any DOT, and likely need .01 DOT (to send with `airdrop-sendED.js`) (b) MYTH to be checked
+* `airdrop-sendED.js`, a script to send .01 DOT ED to
