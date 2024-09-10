@@ -6,7 +6,6 @@ const path = require('path');
 const wallet1Mnemonic = fs.readFileSync(`${process.env.HOME}/.wallet1`, 'utf-8').trim();  // CN
 const wallet2Address = '12j7ydmwGoPr1WxPcYx1u34G8wxSW4vgwTCwKP6AgsPtVvH1';   // ST
 const wallet3Address = '14QT3gXBmzj8ZqwtKrxGHvsyXUL1m1hcT8rqUfe78thmB29j';   // OGW
-const production = false;
 
 async function main() {
     // Initialize the API and wait until ready
