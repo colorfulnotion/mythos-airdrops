@@ -29,7 +29,7 @@ async function main() {
     const airdrop = "643";
 
     // Directory containing the .txt files
-    const directoryPath = path.join(__dirname, `${airdrop}`);
+    const directoryPath = path.join(__dirname, airdrop, group);
     // Get all .txt files from the directory
     const files = fs.readdirSync(directoryPath).filter(file => file.endsWith('.txt'));
     let nbatches = 0;
@@ -41,7 +41,9 @@ async function main() {
         // Create a call using the hex string (considering it's already encoded properly)
         const batch = api.createType('Call', hexString);
 	const blake2Hash = blake2AsHex(batch.toHex());
+  console.log(filePath, blake2Hash);
 	if ( file.includes(blake2Hash) ) { // CHECKS that the hash of the content of the file is in the filename
+    console.log('ready');
             // Create a multisig transaction for the batch
             const multisig = api.tx.multisig.asMulti(
 		threshold,

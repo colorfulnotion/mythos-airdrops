@@ -59,7 +59,8 @@ async function decodeBatchAndCheckBalances(api, asset, batchCall, logFilePath) {
     let logContents = ''; // Capture log contents
 
     const call = api.createType('Call', batchCall.rawHexData); // Decode raw hex into a Call object
-
+    let fails = 0;
+    let succs = 0;
     // Check if the outer call is a `utility.batch`
     if (call.section === 'utility' && call.method === 'batch') {
         const batchArgs = call.args[0]; // Extract the array of calls from the batch
@@ -82,22 +83,25 @@ async function decodeBatchAndCheckBalances(api, asset, batchCall, logFilePath) {
                 // (3) Log results
                 const dotResult = (dotBalance === 0) ? "NEEDED" : "OKDOT";
                 const assetResult = (assetBalance / 10 ** 18 < transferAmount / 10 ** 18) ? "CHECKMYTH" : "OKMYTH";
-
+                if ( dotResult == "NEEDED" ) fails++; else succs++;
                 const logEntry = `${address}:${transferAmount}:${dotResult}:${assetResult}\n`;
                 logContents += logEntry; // Append the log entry to the log contents
                 console.log(logEntry.trim()); // Also log to console
             }
         }
     }
-
-    // Write log contents to the log directory with a .log extension
-    fs.writeFileSync(logFilePath, logContents);
-    console.log(`Log written to: ${logFilePath}`);
+    if ( fails < succs ) {
+      // Write log contents to the log directory with a .log extension
+      fs.writeFileSync(logFilePath, logContents);
+      console.log(`Log written to: ${logFilePath}`);
+      return(true)
+    }
+    return(false);
 }
 
 async function main() {
     // Initialize the API and wait until ready
-    const wsProvider = new WsProvider('wss://polkadot-asset-hub-rpc.polkadot.io');
+    const wsProvider = new WsProvider('wss://asset-hub-polkadot-rpc.dwellir.com');
     const api = await ApiPromise.create({ provider: wsProvider });
     await cryptoWaitReady();
 
@@ -150,7 +154,14 @@ async function main() {
         }
 
         // If the log file does not exist, process and create it
-        await decodeBatchAndCheckBalances(api, asset, batchCall, logFilePath);
+        let tries = 0;
+        while ( tries < 3 ) {
+          let res = await decodeBatchAndCheckBalances(api, asset, batchCall, logFilePath);
+          if ( res == true ) {
+            tries = 99;
+          }
+        }
+
       }
     }
 

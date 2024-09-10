@@ -6,6 +6,7 @@ const path = require('path');
 const wallet1Mnemonic = fs.readFileSync(`${process.env.HOME}/.wallet1`, 'utf-8').trim();  // CN
 const filePath = path.join(__dirname, 'addresses.txt'); // Replace with the correct file path
 const dotAmount = '100000000'; // 0.01 DOT (10^10 Plancks)
+const MAX_BATCH_SIZE = 383; // Maximum number of transfers per batch
 
 async function readAddressFile(filePath) {
     return new Promise((resolve, reject) => {
@@ -20,8 +21,8 @@ async function readAddressFile(filePath) {
                 const sa = line.split(':');
                 let address = sa[0];
                 let dotResult = sa[2];
-                if ( dotResult == "NEEDED" ) {
-                  addresses.push(address);
+                if (dotResult == "NEEDED") {
+                    addresses.push(address);
                 }
             });
             resolve(addresses);
@@ -29,9 +30,29 @@ async function readAddressFile(filePath) {
     });
 }
 
+async function getDotBalance(api, address) {
+    try {
+        let query = await api.query.system.account(address);
+        let x = query.toJSON();
+        let free = x.data.free;
+        return free;
+    } catch (error) {
+        console.error(`Error fetching DOT balance for ${address}:`, error);
+        return 0;
+    }
+}
+
+function chunkArray(array, size) {
+    const result = [];
+    for (let i = 0; i < array.length; i += size) {
+        result.push(array.slice(i, i + size));
+    }
+    return result;
+}
+
 async function main() {
     // Initialize the API and wait until ready
-    const wsProvider = new WsProvider('wss://polkadot-asset-hub-rpc.polkadot.io');
+    const wsProvider = new WsProvider('wss://asset-hub-polkadot-rpc.dwellir.com');
     const api = await ApiPromise.create({ provider: wsProvider });
     await cryptoWaitReady();
 
@@ -41,17 +62,38 @@ async function main() {
 
     // Read addresses from the file
     const addresses = await readAddressFile(filePath);
-    console.log(`Found ${addresses.length} addresses`, addresses);
+    console.log(`Found ${addresses.length} addresses`);
 
-    // Create batch of transfer transactions (sending 0.01 DOT to each address)
-    const transfers = addresses.map(address => api.tx.balances.transferAllowDeath(address, dotAmount));
+    // Split addresses into batches of MAX_BATCH_SIZE
+    const addressChunks = chunkArray(addresses, MAX_BATCH_SIZE);
 
-    // Create a single batch transaction
-    const batch = api.tx.utility.batch(transfers);
-    console.log(batch.method.toHex())
-    // Sign and send the transaction
-    const txHash = await batch.signAndSend(wallet1);
-    console.log(`Transaction sent with hash: ${txHash}`);
+    for (let i = 0; i < addressChunks.length; i++) {
+        const chunk = addressChunks[i];
+        console.log(`Processing batch ${i + 1}/${addressChunks.length} with ${chunk.length} addresses`);
+
+        const transfers = [];
+        for (let address of chunk) {
+            const balance = await getDotBalance(api, address);
+            if (balance === 0) {
+                console.log(`Adding address ${address} with 0 balance to batch`);
+                transfers.push(api.tx.balances.transferAllowDeath(address, dotAmount));
+            } else {
+                console.log(`Skipping address ${address} with non-zero balance: ${balance}`);
+            }
+        }
+
+        if (transfers.length > 0) {
+            // Create a single batch transaction
+            const batch = api.tx.utility.batch(transfers);
+            console.log("READY", transfers.length)
+            // Sign and send the transaction
+            const txHash = await batch.signAndSend(wallet1);
+            console.log(`Batch ${i + 1} sent with hash: ${txHash}`);
+
+        } else {
+            console.log(`Batch ${i + 1} has no valid transfers to send.`);
+        }
+    }
 
     // Disconnect from the node
     await api.disconnect();
