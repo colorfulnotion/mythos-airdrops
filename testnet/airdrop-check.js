@@ -42,7 +42,7 @@ async function getDotBalance(api, address) {
 
 async function getAssetBalance(api, asset, address) {
     try {
-        let query = await api.query.asset.account(asset, address);
+        let query = await api.query.assets.account(asset, address);
         let x = query.toJSON();
         if (!x) return 0;
         let balanceRaw = x.balance;

@@ -61,14 +61,14 @@ async function main() {
 	const batchCalls = transfersData.slice(i, i + MAX_CALLS_PER_BATCH).map(({ address_ss58, airdrop_amount }) => {
 	    if ( airdrop_amount == inactiveAmount ) {
 		totalAmount += 1.0;
-		return api.tx.asset.transfer(asset, address_ss58, inactiveAmount);
+		return api.tx.assets.transfer(asset, address_ss58, inactiveAmount);
 	    } else {
 		totalAmount += Math.round(airdrop_amount);
-		return api.tx.asset.transfer(asset, address_ss58, `${airdrop_amount}${decimalString}`);
+		return api.tx.assets.transfer(asset, address_ss58, `${airdrop_amount}${decimalString}`);
 	    }
 	});
         if ( additionalTransferAmount < 2 ) { // safety
-	    batchCalls.push(api.tx.asset.transfer(asset, additionalTransferAddress, `${additionalTransferAmount}${decimalString}`));
+	    batchCalls.push(api.tx.assets.transfer(asset, additionalTransferAddress, `${additionalTransferAmount}${decimalString}`));
 	    totalAmount += Math.round(additionalTransferAmount);
 	    const batchIndexHex = `${batch.toString(16).padStart(4, '0')}`;
             batchCalls.push(api.tx.system.remark(`${batchIndexHex}:${totalAmount}`));
