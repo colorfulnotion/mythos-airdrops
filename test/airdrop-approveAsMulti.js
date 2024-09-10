@@ -20,7 +20,7 @@ async function main() {
     }
     const group = process.argv[2];
     console.log("Processing group: ", group)
-    
+
     // Initialize keyring and add accounts
     const keyring = new Keyring({ type: 'sr25519' });
     const wallet1 = keyring.addFromMnemonic(wallet1Mnemonic);
@@ -52,13 +52,9 @@ async function main() {
 		0
             );
             // Send the transaction from the first wallet
-            if ( production ) {
 		const { blockHash } = await multisig.signAndSend(wallet1, { nonce: -1 });
 		console.log(`Batch ${nbatches}/${files.length} approveAsMulti submitted with block hash ${blockHash}`);
-	    } else {
-		console.log(`Batch ${nbatches}/${files.length}: ${file} READY FOR PRODUCTION!`);
-		nbatches++;
-	    }
+	  nbatches++;
 	} else {
 	    console.log(`Batch ${nbatches}/${files.length}: ${file} HASH check FAILED!`);
 	    process.exit(0);

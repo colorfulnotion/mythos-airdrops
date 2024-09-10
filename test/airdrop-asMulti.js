@@ -28,7 +28,7 @@ async function main() {
     // Fixed 2nd+3rd wallet address
     const otherSignatories = [wallet2Address, wallet3Address].sort();
     const airdrop = "643";
-    
+
     // Directory containing the .txt files
     const directoryPath = path.join(__dirname, `${airdrop}`);
     // Get all .txt files from the directory
@@ -51,16 +51,11 @@ async function main() {
 		batch,
 		0      // maxWeight (0 means the transaction will use the maximum weight)
             );
-	    
+
             // Send the transaction from the first wallet
-            if ( production ) {
 		const { blockHash } = await multisig.signAndSend(wallet1, { nonce: -1 });
 		console.log(`Batch ${nbatches}/${files.length} submitted by Wallet 1 with block hash ${blockHash}`);
-      		// await multisige.signAndSend(wallet2, { nonce: -1 });
-	    } else {
-		console.log(`Batch ${nbatches}/${files.length}: ${file} READY FOR PRODUCTION!`);
-		nbatches++;
-	    }
+    nbatches++;
 	} else {
 	    console.log(`Batch ${nbatches}/${files.length}: ${file} HASH check!`);
 	    process.exit(0);

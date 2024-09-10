@@ -61,5 +61,4 @@ Other scripts include:
 The majority of eligible addresses already have 0.01 DOT so this will not show many hits.
 
 
-The above scripts are in both the "production" and "test" directory.  The difference is that the "production" directory has the full airdrop whereas the "test" directory is for training/test purposes only.
-
+The above scripts are in both the "production" and "test" and "testnet" directory.  The difference is that the "production" directory has the full airdrop whereas the "test" and "testnet" directory is for training/testing purposes only.
