@@ -6,7 +6,6 @@ const path = require('path');
 const wallet1Mnemonic = fs.readFileSync(`${process.env.HOME}/.wallet1`, 'utf-8').trim();  // CN
 const wallet2Address = '12j7ydmwGoPr1WxPcYx1u34G8wxSW4vgwTCwKP6AgsPtVvH1';   // ST
 const wallet3Address = '14QT3gXBmzj8ZqwtKrxGHvsyXUL1m1hcT8rqUfe78thmB29j';   // OGW
-const production = false;
 
 async function main() {
     // Initialize the API and wait until ready
@@ -28,7 +27,7 @@ async function main() {
     // Fixed 2nd+3rd wallet address
     const otherSignatories = [wallet2Address, wallet3Address].sort();
     const airdrop = "643";
-    
+
     // Directory containing the .txt files
     const directoryPath = path.join(__dirname, `${airdrop}`);
     // Get all .txt files from the directory
@@ -51,16 +50,11 @@ async function main() {
 		batch,
 		0      // maxWeight (0 means the transaction will use the maximum weight)
             );
-	    
+
             // Send the transaction from the first wallet
-            if ( production ) {
 		const { blockHash } = await multisig.signAndSend(wallet1, { nonce: -1 });
 		console.log(`Batch ${nbatches}/${files.length} submitted by Wallet 1 with block hash ${blockHash}`);
-      		// await multisige.signAndSend(wallet2, { nonce: -1 });
-	    } else {
-		console.log(`Batch ${nbatches}/${files.length}: ${file} READY FOR PRODUCTION!`);
-		nbatches++;
-	    }
+    nbatches++;
 	} else {
 	    console.log(`Batch ${nbatches}/${files.length}: ${file} HASH check!`);
 	    process.exit(0);
