@@ -77,8 +77,8 @@ async function main() {
             const txHash = await multisig.signAndSend(wallet1, {
                 nonce: nonce.addn(nbatches)
             });
-            nbatches++;
             console.log(`Batch ${nbatches}/${files.length} submitted with tx hash ${txHash}`);
+            nbatches++;
         } else {
             console.log(`Batch ${nbatches}/${files.length}: ${file} HASH check!`);
             process.exit(0);
