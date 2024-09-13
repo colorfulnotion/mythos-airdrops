@@ -1,9 +1,15 @@
-const { ApiPromise, WsProvider, Keyring } = require('@polkadot/api');
-const { cryptoWaitReady } = require('@polkadot/util-crypto');
+const {
+    ApiPromise,
+    WsProvider,
+    Keyring
+} = require('@polkadot/api');
+const {
+    cryptoWaitReady
+} = require('@polkadot/util-crypto');
 const fs = require('fs');
 const path = require('path');
 
-const wallet1Mnemonic = fs.readFileSync(`${process.env.HOME}/.wallet1`, 'utf-8').trim();  // CN
+const wallet1Mnemonic = fs.readFileSync(`${process.env.HOME}/.wallet1`, 'utf-8').trim(); // CN
 const filePath = path.join(__dirname, 'addresses.txt'); // Replace with the correct file path
 const dotAmount = '100000000'; // 0.01 DOT (10^10 Plancks)
 
@@ -20,8 +26,8 @@ async function readAddressFile(filePath) {
                 const sa = line.split(':');
                 let address = sa[0];
                 let dotResult = sa[2];
-                if ( dotResult == "NEEDED" ) {
-                  addresses.push(address);
+                if (dotResult == "NEEDED") {
+                    addresses.push(address);
                 }
             });
             resolve(addresses);
@@ -32,11 +38,15 @@ async function readAddressFile(filePath) {
 async function main() {
     // Initialize the API and wait until ready
     const wsProvider = new WsProvider('wss://polkadot-asset-hub-rpc.polkadot.io');
-    const api = await ApiPromise.create({ provider: wsProvider });
+    const api = await ApiPromise.create({
+        provider: wsProvider
+    });
     await cryptoWaitReady();
 
     // Initialize keyring and add accounts
-    const keyring = new Keyring({ type: 'sr25519' });
+    const keyring = new Keyring({
+        type: 'sr25519'
+    });
     const wallet1 = keyring.addFromMnemonic(wallet1Mnemonic);
 
     // Read addresses from the file
