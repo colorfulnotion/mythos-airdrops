@@ -1,6 +1,13 @@
-const { ApiPromise, WsProvider } = require('@polkadot/api');
-const { cryptoWaitReady } = require('@polkadot/util-crypto');
-const { hexToBn } = require('@polkadot/util');
+const {
+    ApiPromise,
+    WsProvider
+} = require('@polkadot/api');
+const {
+    cryptoWaitReady
+} = require('@polkadot/util-crypto');
+const {
+    hexToBn
+} = require('@polkadot/util');
 const fs = require('fs');
 const path = require('path');
 
@@ -15,11 +22,15 @@ async function readBatchFiles(directoryPath) {
 
             const batchCalls = files.map((file) => {
                 const filePath = path.join(directoryPath, file);
-                if ( filePath.includes(".txt") ) {
-                  const rawHexData = fs.readFileSync(filePath, 'utf-8').trim();
-                  return { filePath, rawHexData, fileName: file }; // Return file path, content, and file name
+                if (filePath.includes(".txt")) {
+                    const rawHexData = fs.readFileSync(filePath, 'utf-8').trim();
+                    return {
+                        filePath,
+                        rawHexData,
+                        fileName: file
+                    }; // Return file path, content, and file name
                 } else {
-                  return { }; // Return file path, content, and file name
+                    return {}; // Return file path, content, and file name
                 }
             });
 
@@ -46,10 +57,13 @@ async function getAssetBalance(api, asset, address) {
         let x = query.toJSON();
         if (!x) return 0;
         let balanceRaw = x.balance;
-        const balanceBn = hexToBn(balanceRaw, { isLe: false, isNegative: false });
+        const balanceBn = hexToBn(balanceRaw, {
+            isLe: false,
+            isNegative: false
+        });
         return balanceBn.toString();
     } catch (error) {
-        console.error(`Error fetching asset balance for ${address}:`, error);
+        console.error(`Error fetching asset balance for ${asset} ${address}:`, error);
         return 0;
     }
 }
@@ -59,7 +73,8 @@ async function decodeBatchAndCheckBalances(api, asset, batchCall, logFilePath) {
     let logContents = ''; // Capture log contents
 
     const call = api.createType('Call', batchCall.rawHexData); // Decode raw hex into a Call object
-
+    let fails = 0;
+    let succs = 0;
     // Check if the outer call is a `utility.batch`
     if (call.section === 'utility' && call.method === 'batch') {
         const batchArgs = call.args[0]; // Extract the array of calls from the batch
@@ -67,47 +82,59 @@ async function decodeBatchAndCheckBalances(api, asset, batchCall, logFilePath) {
         for (const innerCall of batchArgs) {
             const decodedInnerCall = api.createType('Call', innerCall.toHex()); // Decode each inner call
 
-            // Check if the inner call is a `foreignAssets.transfer`
-            if (decodedInnerCall.section === 'foreignAssets' && decodedInnerCall.method === 'transfer') {
-                const { args } = decodedInnerCall.toJSON();
+            // Check if the inner call is a `assets.transfer`
+            if (decodedInnerCall.section === 'assets' && decodedInnerCall.method === 'transfer') {
+                const {
+                    args
+                } = decodedInnerCall.toJSON();
                 const address = args.target.id; // The address the funds are being transferred to
                 const transferAmountRaw = args.amount; // The transfer amount
-                const transferAmountBn = hexToBn(transferAmountRaw, { isLe: false, isNegative: false });
+                const transferAmountBn = hexToBn(transferAmountRaw, {
+                    isLe: false,
+                    isNegative: false
+                });
                 const transferAmount = transferAmountBn.toString();
 
                 // (1) Get DOT balance from system.account
                 const dotBalance = await getDotBalance(api, address);
-                // (2) Get asset balance from foreignAssets.balanceOf
+                // (2) Get asset balance from assets.account
                 const assetBalance = await getAssetBalance(api, asset, address);
                 // (3) Log results
                 const dotResult = (dotBalance === 0) ? "NEEDED" : "OKDOT";
                 const assetResult = (assetBalance / 10 ** 18 < transferAmount / 10 ** 18) ? "CHECKMYTH" : "OKMYTH";
-
+                //const assetResult = "OKMYTH"
+                if (dotResult == "NEEDED") fails++;
+                else succs++;
                 const logEntry = `${address}:${transferAmount}:${dotResult}:${assetResult}\n`;
                 logContents += logEntry; // Append the log entry to the log contents
                 console.log(logEntry.trim()); // Also log to console
             }
         }
     }
-
-    // Write log contents to the log directory with a .log extension
-    fs.writeFileSync(logFilePath, logContents);
-    console.log(`Log written to: ${logFilePath}`);
+    if (fails < succs) {
+        // Write log contents to the log directory with a .log extension
+        fs.writeFileSync(logFilePath, logContents);
+        console.log(`Log written to: ${logFilePath}`);
+        return (true)
+    }
+    return (false);
 }
 
 async function main() {
     // Initialize the API and wait until ready
-    const wsProvider = new WsProvider('wss://polkadot-asset-hub-rpc.polkadot.io');
-    const api = await ApiPromise.create({ provider: wsProvider });
+    const wsProvider = new WsProvider('wss://asset-hub-polkadot-rpc.dwellir.com');
+    const api = await ApiPromise.create({
+        provider: wsProvider
+    });
     await cryptoWaitReady();
 
     // Read the raw hex call data from the files in the 643/b1 (or whatever) directory
     const airdrop = '643'; // Base directory for airdrop calls grouped into folders by batches
-    if ( process.argc < 3 ) {
-      console.log("Need group input")
-      process.exit(1);
-    }
     const batchNumber = process.argv[2];
+    if (batchNumber == undefined) {
+        console.log("Need group input")
+        process.exit(0)
+    }
     console.log("Processing group: ", batchNumber);
     const batchDir = path.join(airdrop, `${batchNumber}`);
 
@@ -116,7 +143,9 @@ async function main() {
 
     // Ensure the log directory exists, create it if it doesn't
     if (!fs.existsSync(batchLogDir)) {
-        fs.mkdirSync(batchLogDir, { recursive: true });
+        fs.mkdirSync(batchLogDir, {
+            recursive: true
+        });
     }
 
     const batchCalls = await readBatchFiles(batchDir);
@@ -126,32 +155,32 @@ async function main() {
     }
 
     // Asset definition
-    const asset = {
-        parents: 1,
-        interior: {
-            X1: {
-                parachain: 3369
-            }
-        }
-    };
+    const asset = "1107";
 
     // Process each batch call and generate corresponding log files in the log directory
     for (const batchCall of batchCalls) {
-      if ( batchCall.fileName && batchCall.fileName.includes(".txt") ) {
-        const logFileName = batchCall.fileName.replace('.txt', '.log'); // Replace .txt with .log
-        const logFilePath = path.join(batchLogDir, logFileName); // Log file path in the log directory
+        if (batchCall.fileName && batchCall.fileName.includes(".txt")) {
+            const logFileName = batchCall.fileName.replace('.txt', '.log'); // Replace .txt with .log
+            const logFilePath = path.join(batchLogDir, logFileName); // Log file path in the log directory
 
-        // Check if the log file already exists, if so, skip processing
-        if (fs.existsSync(logFilePath)) {
-            console.log(`Skipping ${logFileName}, log file already exists.`);
-            continue;
-        } else {
-          console.log(`Executing ${logFileName}`);
+            // Check if the log file already exists, if so, skip processing
+            if (fs.existsSync(logFilePath)) {
+                console.log(`Skipping ${logFileName}, log file already exists.`);
+                continue;
+            } else {
+                console.log(`Executing ${logFileName}`);
+            }
+
+            // If the log file does not exist, process and create it
+            let tries = 0;
+            while (tries < 3) {
+                let res = await decodeBatchAndCheckBalances(api, asset, batchCall, logFilePath);
+                if (res == true) {
+                    tries = 99;
+                }
+            }
+
         }
-
-        // If the log file does not exist, process and create it
-        await decodeBatchAndCheckBalances(api, asset, batchCall, logFilePath);
-      }
     }
 
     // Disconnect from the node
