@@ -23,12 +23,8 @@ async function main() {
     });
     await cryptoWaitReady();
 
-    const group = process.argv[2];
-    if (group == undefined) {
-        console.log("Need group input")
-        process.exit(1);
-    }
-    console.log("Processing group: ", group)
+for ( g = 1; g<=14; g++) {
+    const group = `b${g}`;
 
     // Initialize keyring and add accounts
     const keyring = new Keyring({
@@ -45,17 +41,9 @@ async function main() {
     // Directory containing the .txt files
     let directoryPath = path.join(__dirname, airdrop, group);
     // Get all .txt files from the directory
-    let files = []
-    if (group.includes("0x")) {
-        directoryPath = "."
-        files = [group];
-    } else {
-        // Get all .txt files from the directory
-        files = fs.readdirSync(directoryPath).filter(file => file.endsWith('.txt'));
-    }
-    let nbatches = 0;
-    for (const file of files) {
+    let files = fs.readdirSync(directoryPath).filter(file => file.endsWith('.txt'));
 
+    for (const file of files) {
         // Read file content into a string
         const filePath = path.join(directoryPath, file);
         const hexString = fs.readFileSync(filePath, 'utf-8').trim();
@@ -63,28 +51,23 @@ async function main() {
         // Create a call using the hex string (considering it's already encoded properly)
         const batch = api.createType('Call', hexString);
         const blake2Hash = blake2AsHex(batch.toHex());
-        if (file.includes(blake2Hash)) { // CHECKS that the hash of the content of the file is in the filename
-            // Create a multisig transaction for the batch
-            const multisig = api.tx.multisig.asMulti(
-                threshold,
-                otherSignatories,
-                null, // maybeTimepoint (use null if not part of a sequence)
-                batch,
-                0 // maxWeight (0 means the transaction will use the maximum weight)
-            );
 
-            // Send the transaction from the first wallet
-            const txHash = await multisig.signAndSend(wallet1, {
-                nonce: nonce.addn(nbatches)
-            });
-            console.log(`Batch ${nbatches}/${files.length} submitted with tx hash ${txHash}`);
-            nbatches++;
+        if (file.includes(blake2Hash)) { // CHECKS that the hash of the content of the file is in the filename
+            // Retrieve the ongoing multisig timepoint if exists
+            const maybeTimepoint = await api.query.multisig.multisigs(multisigWallet, blake2Hash);
+
+            if (maybeTimepoint.isSome) {
+                const timepoint = maybeTimepoint.unwrap().when;
+                console.log(`${file}:${timepoint.height}:${timepoint.index}`);
+            } else {
+                console.log(`${file}:NOTIMEPOINT:NOTIMEPOINT`);
+            }
         } else {
-            console.log(`Batch ${nbatches}/${files.length}: ${file} HASH check!`);
+            console.log(`Batch ${file} HASH check failed!`);
             process.exit(0);
         }
     }
-
+}
     // Disconnect from the node
     await api.disconnect();
 }
