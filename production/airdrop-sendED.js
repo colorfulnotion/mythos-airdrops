@@ -9,7 +9,7 @@ const {
 const fs = require('fs');
 const path = require('path');
 
-const wallet1Mnemonic = fs.readFileSync(`${process.env.HOME}/.wallet1`, 'utf-8').trim(); // CN
+const wallet1Mnemonic = fs.readFileSync(`${require('os').homedir()}/.wallet1`, 'utf-8').trim(); // CN
 const filePath = path.join(__dirname, 'addresses.txt'); // Replace with the correct file path
 const dotAmount = '100000000'; // 0.01 DOT (10^10 Plancks)
 const MAX_BATCH_SIZE = 383; // Maximum number of transfers per batch
