@@ -10,7 +10,7 @@ const {
 const fs = require('fs');
 const path = require('path');
 
-const wallet1Mnemonic = fs.readFileSync(`${process.env.HOME}/.wallet2`, 'utf-8').trim(); // C = 13diZnYMiakbUqdYJhgr4QkAnpFd4LVA8aAG3wUkrpkDAbw5
+const wallet1Mnemonic = fs.readFileSync(`${require('os').homedir()}/.wallet2`, 'utf-8').trim(); // C = 13diZnYMiakbUqdYJhgr4QkAnpFd4LVA8aAG3wUkrpkDAbw5
 const wallet2Address = '13NCLd3foNpsv1huPDzvvfyKh37NEEkGFotZnP52CTR98YFJ'; // A
 const wallet3Address = '121Rs6fKm8nguHnvPfG1Cq3ctFuNAVZGRmghwkJwHpKxKjbx'; //
 
