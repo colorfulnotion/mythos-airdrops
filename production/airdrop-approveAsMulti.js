@@ -94,6 +94,7 @@ async function main() {
                                 if (hash.toString() === txHash.toString()) {
                                     console.log(`Transaction found in block ${blockHash}, ${header.number}`);
                                     found = true;
+                                    unsubscribe();
                                     resolve(); // Resolve the promise to proceed
                                 }
                             });
