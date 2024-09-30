@@ -23,7 +23,7 @@ async function main() {
     });
     await cryptoWaitReady();
 
-for ( g = 1; g<=14; g++) {
+for ( g = 6; g<=14; g++) {
     const group = `b${g}`;
 
     // Initialize keyring and add accounts
@@ -46,6 +46,7 @@ for ( g = 1; g<=14; g++) {
     for (const file of files) {
         // Read file content into a string
         const filePath = path.join(directoryPath, file);
+	const donePath = filePath.replace(".txt", ".fin");
         const hexString = fs.readFileSync(filePath, 'utf-8').trim();
 
         // Create a call using the hex string (considering it's already encoded properly)
@@ -60,7 +61,7 @@ for ( g = 1; g<=14; g++) {
                 const timepoint = maybeTimepoint.unwrap().when;
                 console.log(`${file}:${timepoint.height}:${timepoint.index}`);
             } else {
-                console.log(`${file}:NOTIMEPOINT:NOTIMEPOINT`);
+                console.log(`git mv ${filePath} ${donePath}`);
             }
         } else {
             console.log(`Batch ${file} HASH check failed!`);
