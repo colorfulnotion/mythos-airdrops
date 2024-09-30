@@ -80,8 +80,8 @@ async function main() {
 		const txHash = await approve.signAndSend(wallet1);
 		console.log(`Batch ${nbatches}/${files.length} approveAsMulti submitted with tx hash ${txHash}`);
 		// WAIT for tx to be included in a block
-                await new Promise((resolve, reject) => {
-                    const unsubscribe = api.rpc.chain.subscribeNewHeads(async (header) => {
+                await new Promise(async (resolve, reject) => {
+                    const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
                         try {
                             // Fetch the block details by the header.hash
                             const blockHash = header.hash;
