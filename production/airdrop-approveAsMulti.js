@@ -17,7 +17,7 @@ const multisigWallet = '15KHn88G2XELAMxbrkBYDmwdbgWYnrGBTPoLdV1NgHUPU6f4';
 
 async function main() {
     // Initialize the API and wait until ready
-    const wsProvider = new WsProvider('wss://polkadot-asset-hub-rpc.polkadot.io');
+    const wsProvider = new WsProvider('wss://asset-hub-polkadot-rpc.dwellir.com');
     const api = await ApiPromise.create({
         provider: wsProvider
     });
