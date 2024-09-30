@@ -40,7 +40,6 @@ async function main() {
     const otherSignatories = [wallet2Address, wallet3Address].sort();
     const airdrop = "643";
 
-    const nonce = await api.rpc.system.accountNextIndex(wallet1.address);
 
     // Directory containing the .txt files
     let directoryPath = path.join(__dirname, airdrop, group);
@@ -49,7 +48,7 @@ async function main() {
         directoryPath = "."
         files = [group];
     } else {
-        // Get all .txt files from the directory
+        // Get all .txt files from the directory (but not the .fin ones)
         files = fs.readdirSync(directoryPath).filter(file => file.endsWith('.txt'));
     }
     let nbatches = 0;
@@ -67,24 +66,49 @@ async function main() {
             if (multisigInfo.isSome) {
                 // Multisig operation is already underway, retrieve timepoint
                 timepoint = multisigInfo.unwrap().when;
-            }
-            const info = await api.tx.utility.batch([batch]).paymentInfo(wallet1);
-            const maxWeight = info.weight;
-
-            const approve = api.tx.multisig.asMulti(
-                threshold,
-                otherSignatories,
-                timepoint,
-                batch,
-                maxWeight
-            );
-
-            // Send the transaction from the first wallet
-            const txHash = await approve.signAndSend(wallet1, {
-                nonce: nonce.addn(nbatches)
-            });
-
-            console.log(`Batch ${nbatches}/${files.length} approveAsMulti submitted with tx hash ${txHash}`);
+		const info = await api.tx.utility.batch([batch]).paymentInfo(wallet1);
+		const maxWeight = info.weight;
+		
+		const approve = api.tx.multisig.asMulti(
+                    threshold,
+                    otherSignatories,
+                    timepoint,
+                    batch,
+                    maxWeight
+		);
+		// Send the transaction from the first wallet
+		const txHash = await approve.signAndSend(wallet1);
+		console.log(`Batch ${nbatches}/${files.length} approveAsMulti submitted with tx hash ${txHash}`);
+		// WAIT for tx to be included in a block
+                await new Promise((resolve, reject) => {
+                    const unsubscribe = api.rpc.chain.subscribeNewHeads(async (header) => {
+                        try {
+                            // Fetch the block details by the header.hash
+                            const blockHash = header.hash;
+                            const signedBlock = await api.rpc.chain.getBlock(blockHash);
+                            
+                            // Check if the transaction is included in the block
+                            const blockExtrinsics = signedBlock.block.extrinsics;
+                            let found = false;
+                            blockExtrinsics.forEach(({ method: { method, section }, hash }) => {
+                                if (hash.toString() === txHash.toString()) {
+                                    console.log(`Transaction found in block ${blockHash}, ${header.number}`);
+                                    found = true;
+                                    resolve(); // Resolve the promise to proceed
+                                }
+                            });
+                            if (!found) {
+                                console.log(`Transaction not yet found in block ${header.number}`);
+                            }
+                        } catch (err) {
+                            console.error(`Error fetching block: ${err}`);
+                            reject(err); // Reject the promise on error
+                        }
+                    });
+                });
+            } else {
+		console.log("Covered", file, "already");
+	    }
             nbatches++;
         } else {
             console.log(`Batch ${nbatches}/${files.length}: ${file} HASH check FAILED!`);
