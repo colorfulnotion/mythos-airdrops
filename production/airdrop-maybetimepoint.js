@@ -23,7 +23,7 @@ async function main() {
     });
     await cryptoWaitReady();
 
-for ( g = 6; g<=14; g++) {
+    const g = process.argv[2];
     const group = `b${g}`;
 
     // Initialize keyring and add accounts
@@ -68,7 +68,7 @@ for ( g = 6; g<=14; g++) {
             process.exit(0);
         }
     }
-}
+
     // Disconnect from the node
     await api.disconnect();
 }
